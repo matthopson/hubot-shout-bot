@@ -1,5 +1,5 @@
 module.exports = (robot) ->
-  emojiTrigger = null
+  emojiTrigger = robot.brain.emojiTrigger
   leaderboard = {}
   userRegexp = new RegExp(/@?([\w .\-]+)\?*$/)
   # TODO: Add ability to change the "shout" term to anything else.
@@ -29,7 +29,6 @@ module.exports = (robot) ->
     unless leaderboard.hasOwnProperty(username)
       leaderboard[username] = 0
     leaderboard[username] += 1
-    console.log(leaderboard)
     setLeaderboard(leaderboard)
 
   userGetShouts = (user) ->
@@ -42,24 +41,27 @@ module.exports = (robot) ->
 
   setEmoji = (emoji) ->
     emojiTrigger = emoji
+    robot.brain.set('emojiTrigger', emoji)
 
-    robot.hear /(@[\w.\-]+)(\s\w+)?\s*(:[\w\d_\-]*\:)\s*(.*)?/, (res) ->
-      fullMatch = res.message.text
-      userNames = fullMatch.match(/@[\w.\-]+/g)
-      matchedEmoji = fullMatch.match(/:[\w\d_\-]*\:/)[0]
+  robot.hear /(@[\w.\-]+)(\s\w+)?\s*(:[\w\d_\-]*\:)\s*(.*)?/, (res) ->
+    return unless emojiTrigger
 
-      if matchedEmoji is emoji
-        if userNames.length > 1
-          userNamesString = userNames.join(', ').replace(/,\s([^,]+)$/, ' and $1')
-        else
-          userNamesString = userNames[0]
+    fullMatch = res.message.text
+    userNames = fullMatch.match(/@[\w.\-]+/g)
+    matchedEmoji = fullMatch.match(/:[\w\d_\-]*\:/)[0]
 
-        # TODO: Allow multiple users to recieve shout in a single command.
-        if removeAtSymbolFromUsername(userNamesString) is res.message.user.name
-          res.reply 'Woah, there ' + userNamesString + '! Self-shouts are not cool, bro.'
-        else
-          userGiveShout(userNamesString)
-          res.reply 'Congrats ' + userNamesString + '!'
+    if matchedEmoji is emojiTrigger
+      if userNames.length > 1
+        userNamesString = userNames.join(', ').replace(/,\s([^,]+)$/, ' and $1')
+      else
+        userNamesString = userNames[0]
+
+      # TODO: Allow multiple users to recieve shout in a single command.
+      if removeAtSymbolFromUsername(userNamesString) is res.message.user.name
+        res.reply 'Woah, there ' + userNamesString + '! Self-shouts are not cool, bro.'
+      else
+        userGiveShout(userNamesString)
+        res.reply 'Congrats ' + userNamesString + '!'
 
   robot.respond /Set a trigger emoji (\:[\w\d_\-]*\:)/, (res) ->
     emoji = res.match[1].trim()
