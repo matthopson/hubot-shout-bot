@@ -20,13 +20,21 @@ module.exports = (robot) ->
 
   userGiveShout = (user) ->
     username = removeAtSymbolFromUsername(user)
+    user = getUserByName(username)
+    return unless user
 
     # TODO: Do a user lookup and store by :id key rather than username
     leaderboard = getLeaderboard()
-    unless leaderboard.hasOwnProperty(username)
-      leaderboard[username] = 0
-    leaderboard[username] += 1
+    leaderboard[user.id] = (leaderboard[user.id] || 0) + 1
+
+    # Migrate from username keys (v1.3)
+    if leaderboard.hasOwnProperty(username)
+      leaderboard[user.id] += leaderboard[username] || 0
+      delete leaderboard[username]
+
     setLeaderboard(leaderboard)
+    # TODO: Perhaps return info about the user?
+    return true
 
   userGetShouts = (user) ->
     username = removeAtSymbolFromUsername(user)
@@ -35,6 +43,10 @@ module.exports = (robot) ->
 
   getUserName = (res) ->
     return res.match[1]
+
+  getUserByName = (username) ->
+    # TODO: Handle cases where it would return more than one
+    return robot.brain.usersForFuzzyName(username)[0]
 
   getTriggerEmoji = ->
     robot.brain.get('emojiTrigger') || null
@@ -61,8 +73,8 @@ module.exports = (robot) ->
       if removeAtSymbolFromUsername(userNamesString) is res.message.user.name
         res.reply 'Woah, there ' + userNamesString + '! Self-shouts are not cool, bro.'
       else
-        userGiveShout(userNamesString)
-        res.reply 'Congrats ' + userNamesString + '!'
+        if userGiveShout(userNamesString)
+          res.reply 'Congrats ' + userNamesString + '!'
 
   robot.respond /Set a trigger emoji (\:[\w\d_\-]*\:)/, (res) ->
     emoji = res.match[1].trim()
