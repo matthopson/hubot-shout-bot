@@ -1,5 +1,5 @@
 module.exports = (robot) ->
-  emojiTrigger = robot.brain.emojiTrigger
+  emojiTrigger = robot.brain.get('emojiTrigger')
   leaderboard = {}
   userRegexp = new RegExp(/@?([\w .\-]+)\?*$/)
   # TODO: Add ability to change the "shout" term to anything else.
