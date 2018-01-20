@@ -1,6 +1,4 @@
 module.exports = (robot) ->
-  emojiTrigger = robot.brain.get('emojiTrigger')
-  leaderboard = {}
   userRegexp = new RegExp(/@?([\w .\-]+)\?*$/)
   # TODO: Add ability to change the "shout" term to anything else.
 
@@ -9,7 +7,7 @@ module.exports = (robot) ->
       username = username.substring(1)
     return username
 
-  getLeaderboard = () ->
+  getLeaderboard = ->
     leaderboard = robot.brain.get('leaderboard') || {}
     unless leaderboard?
       robot.brain.set('leaderboard', leaderboard)
@@ -17,7 +15,6 @@ module.exports = (robot) ->
     return leaderboard
 
   setLeaderboard = (data) ->
-    leaderboard = data
     robot.brain.set('leaderboard', data)
     # TODO: Add server sync
 
@@ -39,11 +36,15 @@ module.exports = (robot) ->
   getUserName = (res) ->
     return res.match[1]
 
-  setEmoji = (emoji) ->
-    emojiTrigger = emoji
+  getTriggerEmoji = ->
+    robot.brain.get('emojiTrigger') || null
+
+  setTriggerEmoji = (emoji) ->
     robot.brain.set('emojiTrigger', emoji)
 
+
   robot.hear /(@[\w.\-]+)(\s\w+)?\s*(:[\w\d_\-]*\:)\s*(.*)?/, (res) ->
+    emojiTrigger = getTriggerEmoji()
     return unless emojiTrigger
 
     fullMatch = res.message.text
@@ -66,7 +67,7 @@ module.exports = (robot) ->
   robot.respond /Set a trigger emoji (\:[\w\d_\-]*\:)/, (res) ->
     emoji = res.match[1].trim()
     if emoji?
-      setEmoji(emoji)
+      setTriggerEmoji(emoji)
       res.reply 'Ok, when I see ' + emoji + ', I\'ll give a shout out!'
     else
       res.reply 'I\'m sorry, something went wrong. Did you set an emoji?'
@@ -81,6 +82,9 @@ module.exports = (robot) ->
       res.reply 'You have received ' + shoutCount + ' shouts!'
     else
       res.reply 'Sadly, you have received no shouts - but that doesn\'t mean you should stop being awesome.'
+
+  robot.respond /Show me the trigger emoji/, (res) ->
+    res.reply getTriggerEmoji()
 
   robot.respond /Show me the leaderboard/, (res) ->
     # TODO: Clean up the display of the leaderboard.
