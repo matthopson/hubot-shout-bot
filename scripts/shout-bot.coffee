@@ -57,6 +57,9 @@ module.exports = (robot) ->
     # TODO: Handle cases where it would return more than one
     return robot.brain.usersForFuzzyName(removeAtSymbolFromUsername(username))[0]
 
+  getUserById = (userId) ->
+    return robot.brain.userForId(userId)
+
   getClientUser = (username) ->
     user = getUserByName(username)
     # TODO: Dig into how these ids map with clients other than slack.
@@ -127,10 +130,12 @@ module.exports = (robot) ->
     leaderboard = getLeaderboard()
     leaderboardTxt = '\n:: Shout Leaderboard ::'
     position = 0
-    Object.keys(leaderboard).forEach((username) ->
-      shoutCount = leaderboard[username]
-      position++
-      leaderboardTxt += '\n' +
-        position + '. ' + username + ' - ' + shoutCount + '\n'
+    Object.keys(leaderboard).forEach((userId) ->
+      shoutCount = leaderboard[userId]
+      user = getUserById(userId)
+      if user?
+        position++
+        leaderboardTxt += '\n' +
+          position + '. ' + user.name + ' - ' + shoutCount + '\n'
     )
     res.reply leaderboardTxt
