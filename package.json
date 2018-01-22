@@ -1,6 +1,6 @@
 {
   "name": "hubot-shout-bot",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "author": "Matt Hopson <matthopson@gmail.com>",
   "description": "Give a co-worker a shout out for being awesome.",
