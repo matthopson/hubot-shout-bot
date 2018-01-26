@@ -18,14 +18,13 @@ module.exports = (robot) ->
     robot.brain.set('leaderboard', data)
     # TODO: Add server sync
 
-  userGiveShout = (user) ->
+  userGiveShout = (user, count=1) ->
     username = removeAtSymbolFromUsername(user)
     user = getUserByName(username)
     return unless user
 
-    # TODO: Do a user lookup and store by :id key rather than username
     leaderboard = getLeaderboard()
-    leaderboard[user.id] = (leaderboard[user.id] || 0) + 1
+    leaderboard[user.id] = (leaderboard[user.id] || 0) + count
 
     # Migrate from username keys (v1.3)
     if leaderboard.hasOwnProperty(username)
@@ -79,29 +78,36 @@ module.exports = (robot) ->
 
     fullMatch = res.message.text
     userNames = fullMatch.match(/@[\w.\-]+/g)
-    matchedEmoji = fullMatch.match(/:[\w\d_\-]*\:/)[0]
+    matchedEmojis = fullMatch.match(/:[\w\d_\-]*\:/g)
+    matchedEmojiCount = 0
     senderName = res.message.user.name
 
-    if matchedEmoji is emojiTrigger
-      if userNames.length > 1
-        userNamesString = userNames.join(', ').replace(/,\s([^,]+)$/, ' and $1')
-      else
-        userNamesString = userNames[0]
+    matchedEmojis.forEach((matchedEmoji) ->
+      if matchedEmoji is emojiTrigger
+        matchedEmojiCount += 1
+    )
 
-      # TODO: Allow multiple users to recieve shout in a single command.
-      if removeAtSymbolFromUsername(userNamesString) is senderName and false
-        # NOTE: This is disabled for testing.
-        res.reply 'Woah, there ' + userNamesString + '! Self-shouts are not cool, bro.'
-      else
-        if userGiveShout(userNamesString)
-          clientUser = getClientUser(userNamesString)
-          clientSender = getClientUser(senderName)
+    if matchedEmojiCount > 0
+      userNames.forEach((userName) ->
+        if removeAtSymbolFromUsername(userName) is senderName and false
+          # NOTE: This is disabled for testing.
+          res.reply 'Woah, there ' + userName + '! Self-shouts are not cool, bro.'
+        else
+          if userGiveShout(userName, matchedEmojiCount)
+            clientUser = getClientUser(userName)
+            clientSender = getClientUser(senderName)
 
-          robot.messageRoom clientUser.id,
-            'Congrats! You just recieved a shout out from @' + senderName + '!'
-          # Respond to the sender
-          robot.messageRoom clientSender.id, 'You gave a shout out to ' + userNamesString + '! ' +
-            'Since I\'m currently in BETA you have unlimited shouts to give!'
+            if matchedEmojiCount > 1
+              shoutCountText = matchedEmojiCount + ' shout outs'
+            else
+              shoutCountText = 'a shout'
+
+            robot.messageRoom clientUser.id,
+              'Congrats! You just recieved ' + shoutCountText + ' from @' + senderName + '!'
+            # Respond to the sender
+            robot.messageRoom clientSender.id, 'You gave ' + shoutCountText + ' to ' + userName + '! ' +
+              'Since I\'m currently in BETA you have unlimited shouts to give!'
+      )
 
   robot.respond /Set a trigger emoji (\:[\w\d_\-]*\:)/, (res) ->
     emoji = res.match[1].trim()
