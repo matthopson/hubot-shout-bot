@@ -103,7 +103,7 @@ module.exports = (robot) ->
               shoutCountText = 'a shout'
 
             robot.messageRoom clientUser.id,
-              'Congrats! You just recieved ' + shoutCountText + ' from @' + senderName + '!'
+              'Congrats! You just received ' + shoutCountText + ' from @' + senderName + '!'
             # Respond to the sender
             robot.messageRoom clientSender.id, 'You gave ' + shoutCountText + ' to ' + userName + '! ' +
               'Since I\'m currently in BETA you have unlimited shouts to give!'
