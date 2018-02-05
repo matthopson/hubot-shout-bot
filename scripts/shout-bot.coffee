@@ -72,7 +72,7 @@ module.exports = (robot) ->
     robot.brain.set('emojiTrigger', emoji)
 
 
-  robot.hear /(@[\w.\-]+)(\s\w+)?\s*(:[\w\d_\-]*\:)\s*(.*)?/, (res) ->
+  robot.hear /(@[\w.\-]+)(\s|\w|[.,'"!;:])*\s*(:[\w\d_\-]*\:)\s*(.*)?/, (res) ->
     emojiTrigger = getTriggerEmoji()
     return unless emojiTrigger
 
